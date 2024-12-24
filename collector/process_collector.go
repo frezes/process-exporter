@@ -64,6 +64,12 @@ var (
 		[]string{"groupname"},
 		nil)
 
+	deletedFDsDesc = prometheus.NewDesc(
+		"namedprocess_namegroup_deleted_filedesc",
+		"number of deleted but still open file descriptors for this group",
+		[]string{"groupname"},
+		nil)
+
 	worstFDRatioDesc = prometheus.NewDesc(
 		"namedprocess_namegroup_worst_fd_ratio",
 		"the worst (closest to 1) ratio between open fds and max fds among all procs in this group",
@@ -219,6 +225,7 @@ func (p *NamedProcessCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- writeBytesDesc
 	ch <- membytesDesc
 	ch <- openFDsDesc
+	ch <- deletedFDsDesc
 	ch <- worstFDRatioDesc
 	ch <- startTimeDesc
 	ch <- majorPageFaultsDesc
@@ -273,6 +280,8 @@ func (p *NamedProcessCollector) scrape(ch chan<- prometheus.Metric) {
 				prometheus.GaugeValue, float64(gcounts.OldestStartTime.Unix()), gname)
 			ch <- prometheus.MustNewConstMetric(openFDsDesc,
 				prometheus.GaugeValue, float64(gcounts.OpenFDs), gname)
+			ch <- prometheus.MustNewConstMetric(deletedFDsDesc,
+				prometheus.GaugeValue, float64(gcounts.DeletedFDs), gname)
 			ch <- prometheus.MustNewConstMetric(worstFDRatioDesc,
 				prometheus.GaugeValue, float64(gcounts.WorstFDratio), gname)
 			ch <- prometheus.MustNewConstMetric(cpuSecsDesc,

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/procfs"
@@ -61,6 +62,8 @@ type (
 	Filedesc struct {
 		// Open is the count of open file descriptors, -1 if unknown.
 		Open int64
+		// Deleted is the count of file descriptors that have been deleted but are still open.
+		Deleted int64
 		// Limit is the fd soft limit for the process.
 		Limit uint64
 	}
@@ -484,10 +487,21 @@ func (p proc) GetMetrics() (Metrics, int, error) {
 	// Ditto for status
 	status, _ := p.getStatus()
 
+	var deletednumfds int = 0
 	numfds, err := p.Proc.FileDescriptorsLen()
 	if err != nil {
 		numfds = -1
 		softerrors |= 1
+	} else {
+		targets, err := p.Proc.FileDescriptorTargets()
+		if err != nil {
+			softerrors |= 1
+		}
+		for _, target := range targets {
+			if strings.Contains(target, "(deleted)") {
+				deletednumfds++
+			}
+		}
 	}
 
 	limits, err := p.Proc.NewLimits()
@@ -520,8 +534,9 @@ func (p proc) GetMetrics() (Metrics, int, error) {
 		Counts: counts,
 		Memory: memory,
 		Filedesc: Filedesc{
-			Open:  int64(numfds),
-			Limit: uint64(limits.OpenFiles),
+			Open:    int64(numfds),
+			Deleted: int64(deletednumfds),
+			Limit:   uint64(limits.OpenFiles),
 		},
 		NumThreads: uint64(stat.NumThreads),
 		States:     states,
