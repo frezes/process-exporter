@@ -284,6 +284,11 @@ If gathering smaps file is enabled, two additional values for `memtype` are adde
 Number of file descriptors, based on counting how many entries are in the directory
 /proc/[pid]/fd.
 
+### deleted_filedesc gauge
+
+Number of deleted but still open file descriptors, based on counting the number of 
+entries in the directory /proc/[pid]/fd that contain the (deleted) field.
+
 ### worst_fd_ratio gauge
 
 Worst ratio of open filedescs to filedesc limit, amongst all the procs in the

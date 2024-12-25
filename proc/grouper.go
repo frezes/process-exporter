@@ -39,6 +39,7 @@ type (
 		Memory
 		OldestStartTime time.Time
 		OpenFDs         uint64
+		DeletedFDs      uint64
 		WorstFDratio    float64
 		NumThreads      uint64
 		Threads         []Threads
@@ -72,6 +73,7 @@ func groupadd(grp Group, ts Update) Group {
 	grp.Memory.ProportionalSwapBytes += ts.Memory.ProportionalSwapBytes
 	if ts.Filedesc.Open != -1 {
 		grp.OpenFDs += uint64(ts.Filedesc.Open)
+		grp.DeletedFDs += uint64(ts.Filedesc.Deleted)
 	}
 	openratio := float64(ts.Filedesc.Open) / float64(ts.Filedesc.Limit)
 	if grp.WorstFDratio < openratio {
